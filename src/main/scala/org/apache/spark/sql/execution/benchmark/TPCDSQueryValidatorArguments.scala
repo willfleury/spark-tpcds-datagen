@@ -21,8 +21,12 @@ import java.util.Locale
 
 
 class TPCDSQueryValidatorArguments(val args: Array[String]) {
-  var dataLocation: String = null
+
   var queryFilter: Set[String] = Set.empty
+  var targetSystem = "HDFS"
+  var dataLocation: String = null
+  var database: String = null
+  var queryGridLink: String = null
 
   parseArgs(args.toList)
   validateArguments()
@@ -36,11 +40,23 @@ class TPCDSQueryValidatorArguments(val args: Array[String]) {
 
     while (args.nonEmpty) {
       args match {
-        case optName :: value :: tail if optionMatch("--data-location", optName) =>
+        case ("--target-system") :: value :: tail =>
+          targetSystem = value
+          args = tail
+
+        case ("--database") :: value :: tail =>
+          database = value
+          args = tail
+
+        case ("--query-grid-link") :: value :: tail =>
+          queryGridLink = value
+          args = tail
+
+        case ("--data-location") :: value :: tail =>
           dataLocation = value
           args = tail
 
-        case optName :: value :: tail if optionMatch("--query-filter", optName) =>
+        case ("--query-filter") :: value :: tail =>
           queryFilter = value.toLowerCase(Locale.ROOT).split(",").map(_.trim).toSet
           args = tail
 
@@ -58,17 +74,38 @@ class TPCDSQueryValidatorArguments(val args: Array[String]) {
     System.err.println("""
       |Usage: spark-submit --class <this class> <spark sql test jar> [Options]
       |Options:
+      |  --target-system      Which source system to use [HDFS | TD] (default: HDFS)
       |  --data-location      Path to TPCDS data
       |  --query-filter       Queries to filter, e.g., q3,q5,q13
+      |  --query-grid-link    QueryGrid link to use if TD target
+      |  --database           TD Database if target is TD
     """.stripMargin)
     // scalastyle:on
     System.exit(exitCode)
   }
 
   private def validateArguments(): Unit = {
-    if (dataLocation == null) {
+    if (targetSystem.equals("HDFS") && dataLocation == null) {
       // scalastyle:off println
-      System.err.println("Must specify a data location")
+      System.err.println("Must specify a data location for HDFS target")
+      // scalastyle:on println
+      printUsageAndExit(-1)
+    }
+    if (!targetSystem.equals("HDFS") && !targetSystem.equals("TD")) {
+      // scalastyle:off println
+      System.err.println("Target system must be either HDFS or TD")
+      // scalastyle:on println
+      printUsageAndExit(-1)
+    }
+    if (targetSystem.equals("TD") && database == null) {
+      // scalastyle:off println
+      System.err.println("Must specify a database for TD target")
+      // scalastyle:on println
+      printUsageAndExit(-1)
+    }
+    if (targetSystem.equals("TD") && queryGridLink == null) {
+      // scalastyle:off println
+      System.err.println("Must specify a query grid link for TD target")
       // scalastyle:on println
       printUsageAndExit(-1)
     }

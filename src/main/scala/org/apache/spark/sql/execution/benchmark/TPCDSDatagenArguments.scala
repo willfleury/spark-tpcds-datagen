@@ -33,6 +33,7 @@ class TPCDSDatagenArguments(val args: Array[String]) {
   var filterOutNullPartitionValues = false
   var tableFilter: Set[String] = Set.empty
   var numPartitions = "100"
+  var targetSystem = "HDFS"
 
   parseArgs(args.toList)
   validateArguments()
@@ -82,6 +83,10 @@ class TPCDSDatagenArguments(val args: Array[String]) {
           numPartitions = value
           args = tail
 
+        case ("--target-system") :: value :: tail =>
+          targetSystem = value
+          args = tail
+
         case ("--help") :: tail =>
           printUsageAndExit(0)
 
@@ -102,7 +107,7 @@ class TPCDSDatagenArguments(val args: Array[String]) {
       |  --output-location [STR]                Path to an output location
       |  --scale-factor [NUM]                   Scale factor (default: 1)
       |  --format [STR]                         Output format (default: parquet)
-      |  --overwrite                            Whether it overwrites existing data (default: false)
+      |  --overwrite                            Whether it overwrites existing data (default: false
       |  --partition-tables                     Whether it partitions output data (default: false)
       |  --use-double-for-decimal               Whether it prefers double types (default: false)
       |  --cluster-by-partition-columns         Whether it cluster output data by partition columns (default: false)

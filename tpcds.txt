@@ -1,0 +1,90 @@
+export SPARK_QG=/opt/teradata/tdqg/connector/tdqg-spark-connector/02.05.00.03-148/lib
+
+
+/usr/hdp/current/spark2-client/bin/spark-submit \
+    --class org.apache.spark.sql.execution.benchmark.TPCDSDatagen \
+    --conf spark.master=local[2] \
+    spark-tpcds-datagen.jar \
+    --output-location spark-tpcds-data/
+
+    --scale-factor=1 (10)
+
+/usr/hdp/current/spark2-client/bin/spark-submit \
+	--master yarn --num-executors 2  --driver-memory 5g --executor-memory 7g \
+    --class org.apache.spark.sql.execution.benchmark.TPCDSQueryValidator  \
+    --jars $SPARK_QG/json-simple-1.1.1.jar,$SPARK_QG/log4j-core-2.7.jar,$SPARK_QG/spark-loader-02.05.00.03-148.jar,$SPARK_QG/log4j-api-2.7.jar,$SPARK_QG/qgc-spark-02.05.00.03-148.jar,$SPARK_QG/spark-loaderfactory-02.05.00.03-148.jar \
+    spark-tpcds-datagen.jar \
+    --target-system TD --query-grid-link SPARK-TD1620-Link --database DEMO_BANK_DB --query-filter q
+    
+
+/usr/hdp/current/spark2-client/bin/spark-submit \
+	--master yarn --num-executors 2  --driver-memory 5g --executor-memory 7g \
+    --class org.apache.spark.sql.execution.benchmark.TPCDSQueryValidator  \
+    --jars $SPARK_QG/json-simple-1.1.1.jar,$SPARK_QG/log4j-core-2.7.jar,$SPARK_QG/spark-loader-02.05.00.03-148.jar,$SPARK_QG/log4j-api-2.7.jar,$SPARK_QG/qgc-spark-02.05.00.03-148.jar,$SPARK_QG/spark-loaderfactory-02.05.00.03-148.jar \
+    spark-tpcds-datagen.jar \
+    --target-system HDFS --data-location spark-tpcds-data/ --query-filter q1
+
+    
+
+    	--driver-class-path $SPARK_QG/* \
+    	 
+
+
+ForeignServer.sql("insert into default.nn1 select * from players")
+
+
+ls /etc/opt/teradata/tdconfig/tdqg/
+
+
+
+8088 - yarn
+18081 - history serverç
+
+
+
+
+import tdqg.ForeignServer
+// val s1 = new ForeignServer('SPARK-TD1620-Link',"active","fs1")
+val s1 = new ForeignServer("fs1")
+tables.foreach { t => 
+   println(s"Registering TD link table $t")
+   s1.create(s"$t", s"DEMO_BANK_DB.$t")
+}
+
+
+import tdqg.ForeignServer
+// val s1 = new ForeignServer('SPARK-TD1620-Link',"active","fs1")
+val s1 = new ForeignServer("fs1")
+tables.foreach { t => 
+   println(s"Registering TD link table $t")
+   s1.create(s"$t", s"DEMO_BANK_DB.$t")
+}
+
+
+tables.foreach { t => 
+   println(s"Registering hdfs parquet table $t")
+   spark.read.parquet(s"spark-tpcds-data/$t").createOrReplaceTempView(t)
+}
+
+
+
+val s = """WITH customer_total_return AS
+                |( SELECT
+                |    sr_customer_sk AS ctr_customer_sk,
+                |    sr_store_sk AS ctr_store_sk,
+                |    sum(sr_return_amt) AS ctr_total_return
+                |  FROM store_returns, date_dim
+                |  WHERE sr_returned_date_sk = d_date_sk AND d_year = 2000
+                |  GROUP BY sr_customer_sk, sr_store_sk)
+                |SELECT c_customer_id
+                |FROM customer_total_return ctr1, store, customer
+                |WHERE ctr1.ctr_total_return >
+                |  (SELECT avg(ctr_total_return) * 1.2
+                |  FROM customer_total_return ctr2
+                |  WHERE ctr1.ctr_store_sk = ctr2.ctr_store_sk)
+                |  AND s_store_sk = ctr1.ctr_store_sk
+                |  AND s_state = 'TN'
+                |  AND ctr1.ctr_customer_sk = c_customer_sk
+                |ORDER BY c_customer_id
+                |LIMIT 100
+                |""".stripMargin

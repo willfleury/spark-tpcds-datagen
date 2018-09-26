@@ -22,7 +22,7 @@ Then, you can generate TPCDS test data in `/tmp/spark-tpcds-data`:
 
 ## How to run TPC-DS queries in Spark
 
-You can run TPC-DS quries by using test data in `/tmp/spark-tpcds-data`:
+You can run TPC-DS queries by using test data in `/tmp/spark-tpcds-data`:
 
     $ ./bin/spark-submit \
         --class org.apache.spark.sql.execution.benchmark.TPCDSQueryBenchmark \

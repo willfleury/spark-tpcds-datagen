@@ -19,11 +19,7 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
-  <parent>
-    <groupId>org.apache</groupId>
-    <artifactId>apache</artifactId>
-    <version>14</version>
-  </parent>
+
   <groupId>org.apache.spark</groupId>
   <artifactId>spark-tpcds-datagen_2.11</artifactId>
   <version>0.1.0-SNAPSHOT</version>
@@ -37,10 +33,10 @@
     <maven.version>3.3.9</maven.version>
     <scala.version>2.11.8</scala.version>
     <scala.binary.version>2.11</scala.binary.version>
-    <spark.version>2.1.1</spark.version>
+    <spark.version>2.2.0</spark.version>
     <hadoop.version>2.7.3</hadoop.version>
     <hadoop.binary.version>2.7</hadoop.binary.version>
-    <snappy-java.version>1.1.4</snappy-java.version>
+    <snappy-java.version>1.1.7</snappy-java.version>
 
     <test.java.home>${java.home}</test.java.home>
     <test.exclude.tags></test.exclude.tags>
@@ -97,30 +93,6 @@
     <finalName>${project.artifactId}-${project.version}</finalName>
     <testOutputDirectory>target/scala-${scala.binary.version}/test-classes</testOutputDirectory>
     <plugins>
-      <plugin>
-        <groupId>org.scalastyle</groupId>
-        <artifactId>scalastyle-maven-plugin</artifactId>
-        <version>0.8.0</version>
-        <configuration>
-          <verbose>false</verbose>
-          <failOnViolation>true</failOnViolation>
-          <includeTestSourceDirectory>true</includeTestSourceDirectory>
-          <failOnWarning>false</failOnWarning>
-          <sourceDirectory>src/main/scala</sourceDirectory>
-          <testSourceDirectory>src/test/scala</testSourceDirectory>
-          <configLocation>scalastyle-config.xml</configLocation>
-          <outputFile>target/scalastyle-output.xml</outputFile>
-          <inputEncoding>${project.build.sourceEncoding}</inputEncoding>
-          <outputEncoding>${project.reporting.outputEncoding}</outputEncoding>
-        </configuration>
-        <executions>
-          <execution>
-          <goals>
-            <goal>check</goal>
-          </goals>
-          </execution>
-        </executions>
-      </plugin>
       <plugin>
         <groupId>net.alchim31.maven</groupId>
         <artifactId>scala-maven-plugin</artifactId>

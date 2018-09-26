@@ -47,10 +47,24 @@ object TPCDSQueryValidator {
     "web_returns", "web_site", "reason", "call_center", "warehouse", "ship_mode", "income_band",
     "time_dim", "web_page")
 
-  def setupTables(dataLocation: String): Unit = {
-    tables.foreach { tableName =>
-      spark.read.parquet(s"$dataLocation/$tableName").createOrReplaceTempView(tableName)
-      tableName -> spark.table(tableName).count()
+  def setupTables(benchmarkArgs: TPCDSQueryValidatorArguments): Unit = {
+    if (benchmarkArgs.targetSystem.equals("HDFS")) {
+      tables.foreach { tableName =>
+        println(s"Registering table $tableName")
+        spark.read.parquet(s"${benchmarkArgs.dataLocation}/$tableName").createOrReplaceTempView(tableName)
+        tableName -> spark.table(tableName).count()
+      }
+    } else {
+      tables.foreach { tableName =>
+        println(s"Registering table $tableName")
+        spark.sql(s"""CREATE TABLE $tableName
+                    |    USING com.teradata.querygrid.qgc.spark
+                    |    OPTIONS (
+                    |        link '${benchmarkArgs.queryGridLink}',
+                    |        version 'active',
+                    |        table '${benchmarkArgs.database}.$tableName'
+                    |    )""".stripMargin)
+      }
     }
   }
 
@@ -73,9 +87,10 @@ object TPCDSQueryValidator {
     s"${metric.getMean},${metric.getMax},${metric.get75thPercentile()}"
   }
 
-  def validateTpcdsTests(dataLocation: String, queries: Seq[String]): Unit = {
-    setupTables(dataLocation)
+  def validateTpcdsTests(benchmarkArgs: TPCDSQueryValidatorArguments, queries: Seq[String]): Unit = {
+    setupTables(benchmarkArgs)
     queries.foreach { name =>
+      println(s"Executing query $name")
       // Reset metrics for codegen
       refreshHistogramMetrics()
 
@@ -159,6 +174,6 @@ object TPCDSQueryValidator {
       tpcdsQueries
     }
 
-    validateTpcdsTests(benchmarkArgs.dataLocation, queries = queriesToRun)
+    validateTpcdsTests(benchmarkArgs, queries = queriesToRun)
   }
 }
